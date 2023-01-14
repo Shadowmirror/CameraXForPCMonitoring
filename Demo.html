@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style type="text/css">
+        #container {
+            width: max-content;
+            margin: 0 auto;
+            height: auto;
+            text-align: center;
+        }
+
+        /* #myImage {
+            transform: rotate(270deg);
+        } */
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <img id="myImage" src="" onclick="imgRotate()">
+    </div>
+</body>
+<script>
+    let myImage = document.getElementById("myImage")
+    let rotate = 0
+    let websocket = new WebSocket("ws://192.168.2.129:9001/live")
+    websocket.binaryType = 'arraybuffer';
+    websocket.addEventListener('open', function () {
+        console.log("连接服务成功")
+    })
+    websocket.addEventListener('message', function (e) {
+        var bytes = new Uint8Array(e.data)
+        var base64Image = 'data:image/jpg;base64,' + encode(bytes)
+        var img = new Image()
+        img.src = base64Image
+        img.onload = function () {
+            myImage.src = img.src
+            myImage.width = img.width
+        }
+
+    })
+
+    function imgRotate() {
+        rotate = (rotate + 90) % 360
+        console.log("rotate = " + rotate)
+        myImage.style.transform = "rotate(" + rotate + "deg)"
+    }
+
+    // public method for encoding an Uint8Array to base64
+    function encode(input) {
+        var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+        var output = "";
+        var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+        var i = 0;
+
+        while (i < input.length) {
+            chr1 = input[i++];
+            chr2 = i < input.length ? input[i++] : Number.NaN; // Not sure if the index
+            chr3 = i < input.length ? input[i++] : Number.NaN; // checks are needed here
+
+            enc1 = chr1 >> 2;
+            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+            enc4 = chr3 & 63;
+
+            if (isNaN(chr2)) {
+                enc3 = enc4 = 64;
+            } else if (isNaN(chr3)) {
+                enc4 = 64;
+            }
+            output += keyStr.charAt(enc1) + keyStr.charAt(enc2) +
+                keyStr.charAt(enc3) + keyStr.charAt(enc4);
+        }
+        return output;
+    }
+
+</script>
+
+</html>
